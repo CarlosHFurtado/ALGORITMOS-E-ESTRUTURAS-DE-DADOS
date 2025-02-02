@@ -7,7 +7,7 @@
 #define TAM_EMAIL 100
 #define TAM_VARIAVEIS ( TAM_NOME + TAM_IDADE + TAM_EMAIL + 2 * sizeof(void *) )
 
-void *cabeca = NULL;
+void *topo = NULL;
 
 void AdicionarPessoas( void* pBuffer );
 void BuscarPessoas( void* pBuffer );
@@ -28,7 +28,7 @@ int main() {
 
     do {
         printf("\nEscolha qual opcao voce deseja:\n");
-        printf("1 - Adicionar Pessoa\n2 - Remover Pessoa\n3 - Buscar Pessoa\n4 - Listar Pessoas\n5 - Sair\n\n");
+        printf("1 - Adicionar Pessoa\n2 - Remover Pessoa\n3 - Buscar Pessoa\n4 - Listar Todos\n5 - Sair\n\n");
         scanf("%d", opcao);
         getchar();
 
@@ -59,7 +59,7 @@ int main() {
         }
     } while ( *opcao != 5 );
 
-    void* atual = cabeca;
+    void* atual = topo;
     while ( atual != NULL ) {
         void* proximo = *(void**)(atual + TAM_NOME + TAM_IDADE + TAM_EMAIL);
         free(atual);
@@ -70,7 +70,7 @@ int main() {
     return 0;
 }
 
-void AdicionarPessoas( void* pBuffer ) {
+void AdicionarPessoas(void* pBuffer) {
     void *nome = pBuffer;
     void *idade = nome + TAM_NOME;
     void *email = idade + TAM_IDADE;
@@ -102,35 +102,25 @@ void AdicionarPessoas( void* pBuffer ) {
     void **ante = prox + 1;
     *prox = NULL;
     *ante = NULL;
+
     strcpy((char *)novoNomeNo, (char *)nome);
     strcpy((char *)novoEmailNo, (char *)email);
     *(int *)novoIdadeNo = *(int *)idade;
 
-    if (cabeca == NULL) {
-        cabeca = novo_pBuffer;
+    if (topo == NULL) {
+        topo = novo_pBuffer;
     } else {
-        void *atual = cabeca;
-        void *anterior = NULL;
+        void *atual = topo;
 
-        while (atual != NULL && strcmp((char *)atual, (char *)nome) < 0) {
-            anterior = atual;
+        while (*(void **)(atual + TAM_NOME + TAM_IDADE + TAM_EMAIL) != NULL) {
             atual = *(void **)(atual + TAM_NOME + TAM_IDADE + TAM_EMAIL);
         }
 
-        if (anterior == NULL) {
-            *prox = cabeca;
-            *(void **)(cabeca + TAM_NOME + TAM_IDADE + TAM_EMAIL + sizeof(void *)) = novo_pBuffer;
-            cabeca = novo_pBuffer;
-        } else {
-            *prox = atual;
-            *ante = anterior;
-            *(void **)(anterior + TAM_NOME + TAM_IDADE + TAM_EMAIL) = novo_pBuffer;
-            if (atual != NULL) {
-                *(void **)(atual + TAM_NOME + TAM_IDADE + TAM_EMAIL + sizeof(void *)) = novo_pBuffer;
-            }
-        }
+        *(void **)(atual + TAM_NOME + TAM_IDADE + TAM_EMAIL) = novo_pBuffer;
+        *ante = atual;
     }
 }
+
 
 void BuscarPessoas( void* pBuffer ) {
     void *nome = pBuffer;
@@ -139,7 +129,7 @@ void BuscarPessoas( void* pBuffer ) {
     fgets((char *)nome, TAM_NOME, stdin);
     ((char *)nome)[strcspn((char *)nome, "\n")] = 0;
 
-    void *atual = cabeca;
+    void *atual = topo;
     while (atual != NULL && strcmp((char *)atual, (char *)nome) != 0) {
         atual = *(void **)(atual + TAM_NOME + TAM_IDADE + TAM_EMAIL);
     }
@@ -164,7 +154,7 @@ void RemoverPessoas( void* pBuffer ) {
     fgets((char *)nome, TAM_NOME, stdin);
     ((char *)nome)[strcspn((char *)nome, "\n")] = 0;
 
-    void *atual = cabeca;
+    void *atual = topo;
     void *anterior = NULL;
 
     while ( atual != NULL && strcmp((char *)atual, (char *)nome) != 0 ) {
@@ -178,9 +168,9 @@ void RemoverPessoas( void* pBuffer ) {
         printf("====================");
     } else {
         if ( anterior == NULL ) {
-            cabeca = *(void **)(atual + TAM_NOME + TAM_IDADE + TAM_EMAIL);
-            if (cabeca != NULL) {
-                *(void **)(cabeca + TAM_NOME + TAM_IDADE + TAM_EMAIL + sizeof(void *)) = NULL;
+            topo = *(void **)(atual + TAM_NOME + TAM_IDADE + TAM_EMAIL);
+            if (topo != NULL) {
+                *(void **)(topo + TAM_NOME + TAM_IDADE + TAM_EMAIL + sizeof(void *)) = NULL;
             }
         } else {
             *(void **)(anterior + TAM_NOME + TAM_IDADE + TAM_EMAIL) = *(void **)(atual + TAM_NOME + TAM_IDADE + TAM_EMAIL);
@@ -196,7 +186,7 @@ void RemoverPessoas( void* pBuffer ) {
 }
 
 void ListarPessoas( void ) {
-    void *atual = cabeca;
+    void *atual = topo;
     if ( atual == NULL ) {
         printf("====================");
         printf("\nSem dados na agenda\n");
